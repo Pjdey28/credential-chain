@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CredentialStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+model Issuer {
+  id           String        @id @default(cuid())
+  name         String
+  code         String        @unique
+  publicKey    String
+  privateKey   String
+  createdAt    DateTime      @default(now())
+  credentials  Credential[]
+  ledgerBlocks LedgerBlock[]
+}
+
+model Credential {
+  id                  String           @id @default(cuid())
+  credentialId        String           @unique
+  issuerId            String
+
+  studentName         String
+  studentId           String
+  degree              String
+  branch              String
+  institution         String
+  graduationYear      Int
+  cgpa                Float?
+
+  issueDate           DateTime
+  status              CredentialStatus @default(ACTIVE)
+
+  credentialHash      String
+  digitalSignature    String
+  verificationVersion Int              @default(1)
+
+  revokedAt           DateTime?
+  revocationReason    String?
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  issuer              Issuer           @relation(fields: [issuerId], references: [id])
+
+  ledgerBlock         LedgerBlock?
+}
+
+model LedgerBlock {
+  id           String      @id @default(cuid())
+  blockIndex   Int         @unique
+
+  credentialId String?     @unique
+  dataHash     String
+
+  previousHash String
+  currentHash  String
+
+  timestamp    DateTime    @default(now())
+  issuerId     String
+
+  credential   Credential? @relation(fields: [credentialId], references: [credentialId])
+
+  issuer       Issuer      @relation(fields: [issuerId], references: [id])
+
+  @@index([issuerId])
+  @@index([currentHash])
+}
+
+model AuditEvent {
+  id           String   @id @default(cuid())
+  credentialId String?
+  eventType    String
+  description  String
+  metadata     String?
+  createdAt    DateTime @default(now())
+
+  @@index([credentialId])
+  @@index([eventType])
+}
