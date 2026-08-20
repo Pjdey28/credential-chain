@@ -37,6 +37,9 @@ export default async function DashboardPage() {
           <a href="/dashboard/credentials" className="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-white">
             View issued credentials
           </a>
+          <a href="/dashboard/bulk" className="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-white">
+            Bulk issue CSV
+          </a>
         </div>
         <div className="mb-10">
           <h2 className="text-3xl font-bold tracking-tight">
