@@ -18,12 +18,14 @@ interface LedgerBlock {
 
 interface TamperResult {
   original: {
-    studentName: string;
+    field: string;
+    value: string | number | null;
     credentialHash: string;
     signatureValid: boolean;
   };
   tampered: {
-    studentName: string;
+    field: string;
+    value: string | number | null;
     credentialHash: string;
     hashChanged: boolean;
     signatureValid: boolean;
@@ -36,6 +38,8 @@ interface TamperResult {
 export default function LedgerExplorer() {
   const [blocks, setBlocks] = useState<LedgerBlock[]>([]);
   const [selectedId, setSelectedId] = useState("");
+  const [tamperField, setTamperField] = useState("studentName");
+  const [tamperValue, setTamperValue] = useState("");
   const [tamper, setTamper] = useState<TamperResult | null>(null);
   const [ledgerValid, setLedgerValid] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,10 @@ export default function LedgerExplorer() {
   }
 
   async function runTamperDemo() {
-    if (!selectedId) return;
+    if (!selectedId || !tamperValue.trim()) {
+      setError("Choose a field and enter the changed value first.");
+      return;
+    }
 
     setRunning(true);
     setTamper(null);
@@ -80,7 +87,11 @@ export default function LedgerExplorer() {
     try {
       const response = await fetch(
         `/api/credentials/${encodeURIComponent(selectedId)}/tamper-demo`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ field: tamperField, value: tamperValue }),
+        }
       );
       const data = await response.json();
 
@@ -151,14 +162,24 @@ export default function LedgerExplorer() {
             <p className="text-xs font-bold uppercase tracking-widest text-amber-700">Controlled demonstration</p>
             <h2 className="mt-2 text-xl font-bold text-amber-950">Tamper a credential in memory</h2>
             <p className="mt-2 max-w-2xl text-sm text-amber-900/80">
-              This changes the student name only in a temporary verification payload. The database and issued credential remain untouched.
+              Select a signed field, enter a replacement value, and verify the edited payload. The database and issued credential remain untouched.
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 md:w-80">
             <select value={selectedId} onChange={(event) => { setSelectedId(event.target.value); setTamper(null); }} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm">
               {blocks.filter((block) => block.credentialId).map((block) => <option key={block.credentialId} value={block.credentialId || ""}>{block.credentialId} · {block.credential?.studentName}</option>)}
             </select>
-            <button onClick={runTamperDemo} disabled={running || !selectedId} className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
+            <select value={tamperField} onChange={(event) => { setTamperField(event.target.value); setTamper(null); }} className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm">
+              <option value="studentName">Student name</option>
+              <option value="studentId">Student ID</option>
+              <option value="degree">Degree</option>
+              <option value="branch">Branch</option>
+              <option value="institution">Institution</option>
+              <option value="graduationYear">Graduation year</option>
+              <option value="cgpa">CGPA</option>
+            </select>
+            <input value={tamperValue} onChange={(event) => { setTamperValue(event.target.value); setTamper(null); }} placeholder="Enter replacement value" className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm" />
+            <button onClick={runTamperDemo} disabled={running || !selectedId || !tamperValue.trim()} className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50">
               {running ? "Running demonstration..." : "Change one field and verify"}
             </button>
           </div>
@@ -178,19 +199,19 @@ function TamperReport({ result }: { result: TamperResult }) {
   return (
     <div className="mt-6 rounded-xl border border-amber-300 bg-white p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-bold text-gray-950">Verification result after changing Student Name</h3>
+        <h3 className="font-bold text-gray-950">Verification result after editing {result.tampered.field}</h3>
         <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">FAIL · tampering detected</span>
       </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
           <p className="text-xs font-bold uppercase text-green-700">Original credential · PASS</p>
-          <p className="mt-2 text-sm font-semibold">{result.original.studentName}</p>
+          <p className="mt-2 text-sm font-semibold">Original: {String(result.original.value)}</p>
           <Hash label="Stored hash" value={result.original.credentialHash} />
           <Check label="Digital signature" passed={result.original.signatureValid} />
         </div>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-xs font-bold uppercase text-red-700">Altered payload · FAIL</p>
-          <p className="mt-2 text-sm font-semibold">{result.tampered.studentName}</p>
+          <p className="mt-2 text-sm font-semibold">Edited: {String(result.tampered.value)}</p>
           <Hash label="New hash" value={result.tampered.credentialHash} />
           <Check label="Hash changed" passed={result.tampered.hashChanged} inverted />
           <Check label="Original signature still valid" passed={result.tampered.signatureValid} />

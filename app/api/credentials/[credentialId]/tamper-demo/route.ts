@@ -8,7 +8,19 @@ interface RouteContext {
   params: Promise<{ credentialId: string }>;
 }
 
-export async function POST(_request: Request, context: RouteContext) {
+const editableFields = [
+  "studentName",
+  "studentId",
+  "degree",
+  "branch",
+  "institution",
+  "graduationYear",
+  "cgpa",
+] as const;
+
+type EditableField = (typeof editableFields)[number];
+
+export async function POST(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
 
   if (!user?.issuerId) {
@@ -19,6 +31,17 @@ export async function POST(_request: Request, context: RouteContext) {
   }
 
   const { credentialId } = await context.params;
+  const body = await request.json().catch(() => ({}));
+  const field = body.field as EditableField;
+  const value = body.value;
+
+  if (!editableFields.includes(field) || value === undefined || value === null) {
+    return NextResponse.json(
+      { success: false, error: "Choose a signed field and provide a replacement value." },
+      { status: 400 }
+    );
+  }
+
   const credential = await prisma.credential.findFirst({
     where: { credentialId, issuerId: user.issuerId },
     include: { issuer: true, ledgerBlock: true },
@@ -31,9 +54,8 @@ export async function POST(_request: Request, context: RouteContext) {
     );
   }
 
-  const tamperedStudentName = `${credential.studentName} (ALTERED)`;
-  const tamperedHash = hashCredential({
-    studentName: tamperedStudentName,
+  const originalPayload = {
+    studentName: credential.studentName,
     studentId: credential.studentId,
     degree: credential.degree,
     branch: credential.branch,
@@ -41,13 +63,35 @@ export async function POST(_request: Request, context: RouteContext) {
     graduationYear: credential.graduationYear,
     cgpa: credential.cgpa,
     issueDate: credential.issueDate.toISOString(),
-  });
+  };
+
+  const editedValue =
+    field === "graduationYear" || field === "cgpa"
+      ? Number(value)
+      : String(value);
+
+  if (
+    (field === "graduationYear" || field === "cgpa") &&
+    !Number.isFinite(editedValue)
+  ) {
+    return NextResponse.json(
+      { success: false, error: `${field} must be a valid number.` },
+      { status: 400 }
+    );
+  }
+
+  const tamperedPayload = {
+    ...originalPayload,
+    [field]: editedValue,
+  };
+  const tamperedHash = hashCredential(tamperedPayload);
   const block = credential.ledgerBlock;
 
   return NextResponse.json({
     success: true,
     original: {
-      studentName: credential.studentName,
+      field,
+      value: originalPayload[field],
       credentialHash: credential.credentialHash,
       signatureValid: verifyCredentialSignature(
         credential.credentialHash,
@@ -56,7 +100,8 @@ export async function POST(_request: Request, context: RouteContext) {
       ),
     },
     tampered: {
-      studentName: tamperedStudentName,
+      field,
+      value: editedValue,
       credentialHash: tamperedHash,
       hashChanged: tamperedHash !== credential.credentialHash,
       signatureValid: verifyCredentialSignature(
