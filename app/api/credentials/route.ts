@@ -1,7 +1,111 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { issueCredential } from "../../../lib/credential";
-import { issueCredentialSchema } from "../../../lib/validation";
+import { issueCredential } from "@/lib/credential";
+import { prisma } from "@/lib/prisma";
+import { issueCredentialSchema } from "@/lib/validation";
+
+export async function GET(
+  request: NextRequest
+) {
+  try {
+    const searchParams =
+      request.nextUrl.searchParams;
+
+    const search =
+      searchParams.get("search")?.trim() || "";
+
+    const status =
+      searchParams.get("status");
+
+    const credentials =
+      await prisma.credential.findMany({
+        where: {
+          AND: [
+            search
+              ? {
+                  OR: [
+                    {
+                      credentialId: {
+                        contains: search,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      studentName: {
+                        contains: search,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      studentId: {
+                        contains: search,
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                }
+              : {},
+
+            status &&
+            ["ACTIVE", "REVOKED", "EXPIRED"].includes(
+              status
+            )
+              ? {
+                  status:
+                    status as
+                      | "ACTIVE"
+                      | "REVOKED"
+                      | "EXPIRED",
+                }
+              : {},
+          ],
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        include: {
+          issuer: {
+            select: {
+              name: true,
+              code: true,
+            },
+          },
+
+          ledgerBlock: {
+            select: {
+              blockIndex: true,
+              currentHash: true,
+              previousHash: true,
+            },
+          },
+        },
+      });
+
+    return NextResponse.json({
+      success: true,
+      credentials,
+      count: credentials.length,
+    });
+  } catch (error) {
+    console.error(
+      "Credential listing error:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Unable to retrieve credentials.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
 
 export async function POST(
   request: NextRequest
