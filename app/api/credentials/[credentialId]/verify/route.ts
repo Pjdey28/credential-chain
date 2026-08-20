@@ -35,6 +35,24 @@ export async function GET(
         credentialId
       );
 
+    const recentVerificationCount = await prisma.auditEvent.count({
+      where: {
+        credentialId,
+        eventType: "CREDENTIAL_VERIFIED",
+        createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+    });
+
+    const fraudSignals = {
+      hashMismatch: result.checks.credentialExists && !result.checks.hashValid,
+      signatureFailure: result.checks.credentialExists && !result.checks.signatureValid,
+      ledgerMismatch: result.checks.credentialExists && !result.checks.ledgerValid,
+      revokedCredential: result.checks.revoked,
+      unknownIssuer: result.checks.credentialExists && !result.checks.issuerValid,
+      abnormalRepeatedVerification: recentVerificationCount >= 20,
+      recentVerificationCount,
+    };
+
     await prisma.auditEvent.create({
       data: {
         credentialId,
@@ -44,6 +62,7 @@ export async function GET(
           status: result.status,
           valid: result.valid,
           checks: result.checks,
+          fraudSignals,
         }),
       },
     });
@@ -56,7 +75,7 @@ export async function GET(
     return NextResponse.json(
       {
         success: true,
-        verification: result,
+        verification: { ...result, fraudSignals },
       },
       {
         status: httpStatus,

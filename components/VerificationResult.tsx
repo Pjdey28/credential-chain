@@ -31,6 +31,15 @@ interface VerificationResultProps {
     };
 
     reason?: string;
+    fraudSignals?: {
+      hashMismatch: boolean;
+      signatureFailure: boolean;
+      ledgerMismatch: boolean;
+      revokedCredential: boolean;
+      unknownIssuer: boolean;
+      abnormalRepeatedVerification: boolean;
+      recentVerificationCount: number;
+    };
   };
 }
 
@@ -69,6 +78,7 @@ export default function VerificationResult({
     credential,
     checks,
     reason,
+    fraudSignals,
   } = verification;
 
   const statusConfig = {
@@ -136,6 +146,21 @@ export default function VerificationResult({
           </div>
         </div>
       </div>
+
+      {fraudSignals && (
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold">Fraud Signals</h3>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Signal label="Hash mismatch" active={fraudSignals.hashMismatch} />
+            <Signal label="Signature failure" active={fraudSignals.signatureFailure} />
+            <Signal label="Ledger mismatch" active={fraudSignals.ledgerMismatch} />
+            <Signal label="Revoked credential" active={fraudSignals.revokedCredential} />
+            <Signal label="Unknown issuer" active={fraudSignals.unknownIssuer} />
+            <Signal label="Repeated verification activity" active={fraudSignals.abnormalRepeatedVerification} />
+          </div>
+          <p className="mt-4 text-xs text-gray-500">Verification requests in the last 24 hours: {fraudSignals.recentVerificationCount}</p>
+        </div>
+      )}
 
       {credential && (
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
@@ -267,4 +292,8 @@ export default function VerificationResult({
       )}
     </div>
   );
+}
+
+function Signal({ label, active }: { label: string; active: boolean }) {
+  return <div className={`rounded-lg border p-3 text-sm ${active ? "border-red-200 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-700"}`}><span className="font-semibold">{active ? "FLAG" : "CLEAR"}</span><span className="ml-2">{label}</span></div>;
 }
