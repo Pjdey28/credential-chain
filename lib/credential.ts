@@ -36,9 +36,16 @@ function generateCredentialId(): string {
 }
 
 export async function issueCredential(
-  input: IssueCredentialInput
+  input: IssueCredentialInput,
+  issuerId?: string
 ) {
-  const issuer = await getDefaultIssuer();
+  const issuer = issuerId
+    ? await prisma.issuer.findUnique({ where: { id: issuerId } })
+    : await getDefaultIssuer();
+
+  if (!issuer) {
+    throw new Error("Issuer not found.");
+  }
 
   const issueDate = new Date();
 

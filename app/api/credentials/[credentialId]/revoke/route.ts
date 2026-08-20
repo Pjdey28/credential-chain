@@ -4,6 +4,8 @@ import {
 } from "next/server";
 
 import { revokeCredential } from "@/lib/revocation";
+import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 interface RouteContext {
   params: Promise<{
@@ -16,8 +18,29 @@ export async function POST(
   context: RouteContext
 ) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user?.issuerId) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
     const { credentialId } =
       await context.params;
+
+    const ownedCredential = await prisma.credential.findFirst({
+      where: { credentialId, issuerId: user.issuerId },
+      select: { credentialId: true },
+    });
+
+    if (!ownedCredential) {
+      return NextResponse.json(
+        { success: false, error: "Credential not found." },
+        { status: 404 }
+      );
+    }
 
     const body = await request.json();
 

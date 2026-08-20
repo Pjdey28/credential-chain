@@ -1,5 +1,0 @@
-{
-  "/api/credentials/[credentialId]/qr/route": "app/api/credentials/[credentialId]/qr/route.js",
-  "/api/credentials/[credentialId]/verify/route": "app/api/credentials/[credentialId]/verify/route.js",
-  "/verify/[credentialId]/page": "app/verify/[credentialId]/page.js"
-}

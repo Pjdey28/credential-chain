@@ -17,13 +17,14 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "next": "^15.5.0",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zod": "^4.0.0"
   },
-    "devDependencies": {
+  "devDependencies": {
     "@playwright/test": "^1.54.0",
     "@types/node": "^22.15.0",
     "@types/qrcode": "^1.5.5",
@@ -35,5 +36,5 @@
     "tsx": "^4.20.0",
     "typescript": "^5.9.0",
     "vitest": "^3.2.4"
-    }
+  }
 }

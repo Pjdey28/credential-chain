@@ -22,6 +22,7 @@ model Issuer {
   createdAt    DateTime      @default(now())
   credentials  Credential[]
   ledgerBlocks LedgerBlock[]
+  users        User[]
 }
 
 model Credential {
@@ -86,4 +87,41 @@ model AuditEvent {
 
   @@index([credentialId])
   @@index([eventType])
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(INSTITUTION_ADMIN)
+
+  issuerId String?
+  issuer   Issuer? @relation(fields: [issuerId], references: [id])
+
+  sessions Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([issuerId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum UserRole {
+  INSTITUTION_ADMIN
+  INSTITUTION_STAFF
 }

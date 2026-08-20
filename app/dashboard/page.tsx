@@ -1,6 +1,10 @@
 import CredentialIssuer from "@/components/CredentialIssuer";
+import LogoutButton from "@/components/LogoutButton";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
@@ -15,8 +19,12 @@ export default function DashboardPage() {
             </h1>
           </div>
 
-          <div className="rounded-full bg-green-50 px-4 py-2 text-xs font-semibold text-green-700">
-            Issuer System Online
+          <div className="flex items-center gap-4">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+              <p className="text-xs text-gray-500">{user?.issuer?.name}</p>
+            </div>
+            <LogoutButton />
           </div>
         </div>
       </div>

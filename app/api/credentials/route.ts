@@ -3,11 +3,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { issueCredential } from "@/lib/credential";
 import { prisma } from "@/lib/prisma";
 import { issueCredentialSchema } from "@/lib/validation";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest
 ) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user?.issuerId) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
     const searchParams =
       request.nextUrl.searchParams;
 
@@ -20,6 +30,7 @@ export async function GET(
     const credentials =
       await prisma.credential.findMany({
         where: {
+          issuerId: user.issuerId,
           AND: [
             search
               ? {
@@ -111,6 +122,15 @@ export async function POST(
   request: NextRequest
 ) {
   try {
+    const user = await getCurrentUser();
+
+    if (!user?.issuerId) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     const parsed =
@@ -130,7 +150,7 @@ export async function POST(
     }
 
     const credential =
-      await issueCredential(parsed.data);
+      await issueCredential(parsed.data, user.issuerId);
 
     return NextResponse.json(
       {

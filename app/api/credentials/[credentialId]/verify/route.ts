@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { verifyCredential } from "@/lib/verification";
+import { verifyCredential } from "../../../../../lib/verification";
 
 interface RouteContext {
   params: Promise<{

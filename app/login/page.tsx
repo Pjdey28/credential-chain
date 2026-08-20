@@ -1,0 +1,92 @@
+"use client";
+
+import Link from "next/link";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", email, password }),
+      });
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Login failed.");
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error ? submissionError.message : "Login failed."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600">
+            CredentialChain
+          </p>
+          <h1 className="mt-3 text-3xl font-bold">Institution Login</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Sign in to manage academic credentials.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="rounded-2xl border bg-white p-8 shadow-sm">
+          <label className="text-sm font-medium">
+            Email
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:border-blue-500"
+            />
+          </label>
+          <label className="mt-5 block text-sm font-medium">
+            Password
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="mt-2 w-full rounded-lg border px-4 py-3 text-sm outline-none focus:border-blue-500"
+            />
+          </label>
+
+          {error && <p className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-6 w-full rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+          <p className="mt-6 text-center text-sm text-gray-500">
+            New institution? <Link href="/signup" className="font-semibold text-blue-600 hover:underline">Create an account</Link>
+          </p>
+        </form>
+      </div>
+    </main>
+  );
+}
