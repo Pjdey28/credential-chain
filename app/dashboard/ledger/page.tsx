@@ -1,4 +1,5 @@
 import LedgerExplorer from "@/components/LedgerExplorer";
+import DashboardAnalytics from "@/components/DashboardAnalytics";
 
 export default function LedgerPage() {
   return (
@@ -13,6 +14,8 @@ export default function LedgerPage() {
         </div>
       </header>
       <div className="mx-auto max-w-7xl px-6 py-10">
+        <DashboardAnalytics />
+        <div className="my-10 border-t" />
         <LedgerExplorer />
       </div>
     </main>

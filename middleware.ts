@@ -11,9 +11,11 @@ export function middleware(request: NextRequest) {
   const analyticsRoute = pathname === "/api/analytics" || pathname === "/api/audit";
   const mutationRoute =
     request.method !== "GET" && pathname.startsWith("/api/credentials/");
+  const privateCredentialRoute =
+    pathname.endsWith("/pdf");
   const authRoute = pathname === "/login" || pathname === "/signup";
 
-  if ((dashboardRoute || credentialCollection || ledgerRoute || analyticsRoute || mutationRoute) && !hasSession) {
+  if ((dashboardRoute || credentialCollection || ledgerRoute || analyticsRoute || mutationRoute || privateCredentialRoute) && !hasSession) {
     if (dashboardRoute) {
       return NextResponse.redirect(new URL("/login", request.url));
     }

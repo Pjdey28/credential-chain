@@ -185,6 +185,12 @@ export default function CredentialDetails({
                 : "NOT_FOUND"
           }
         />
+        <a
+          href={`/api/credentials/${encodeURIComponent(credentialId)}/pdf`}
+          className="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Download PDF
+        </a>
       </div>
 
       {error && (
