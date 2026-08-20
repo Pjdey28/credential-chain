@@ -37,6 +37,13 @@ export default function HomePage() {
               >
                 Verify Credential
               </Link>
+
+              <Link
+                href="/wallet"
+                className="rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+              >
+                Student Wallet
+              </Link>
             </div>
           </div>
         </div>
