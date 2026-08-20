@@ -1,0 +1,29 @@
+{
+  "pages": {
+    "/api/credentials/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/credentials/route.js"
+    ],
+    "/verify/[credentialId]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/verify/[credentialId]/page.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/layout.js"
+    ],
+    "/api/credentials/[credentialId]/verify/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/credentials/[credentialId]/verify/route.js"
+    ],
+    "/api/credentials/[credentialId]/qr/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/credentials/[credentialId]/qr/route.js"
+    ]
+  }
+}
