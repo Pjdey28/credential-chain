@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { verifyCredential } from "../../../../../lib/verification";
+import { prisma } from "../../../../../lib/prisma";
 
 interface RouteContext {
   params: Promise<{
@@ -33,6 +34,19 @@ export async function GET(
       await verifyCredential(
         credentialId
       );
+
+    await prisma.auditEvent.create({
+      data: {
+        credentialId,
+        eventType: "CREDENTIAL_VERIFIED",
+        description: `Credential verification returned ${result.status}.`,
+        metadata: JSON.stringify({
+          status: result.status,
+          valid: result.valid,
+          checks: result.checks,
+        }),
+      },
+    });
 
     const httpStatus =
       result.status === "NOT_FOUND"
