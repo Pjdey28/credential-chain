@@ -7,11 +7,12 @@ export function middleware(request: NextRequest) {
   );
   const dashboardRoute = pathname.startsWith("/dashboard");
   const credentialCollection = pathname === "/api/credentials";
+  const ledgerRoute = pathname === "/api/ledger";
   const mutationRoute =
     request.method !== "GET" && pathname.startsWith("/api/credentials/");
   const authRoute = pathname === "/login" || pathname === "/signup";
 
-  if ((dashboardRoute || credentialCollection || mutationRoute) && !hasSession) {
+  if ((dashboardRoute || credentialCollection || ledgerRoute || mutationRoute) && !hasSession) {
     if (dashboardRoute) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
@@ -34,6 +35,7 @@ export const config = {
     "/dashboard/:path*",
     "/api/credentials",
     "/api/credentials/:path*",
+    "/api/ledger",
     "/login",
     "/signup",
   ],
